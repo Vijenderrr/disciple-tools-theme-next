@@ -100,218 +100,7 @@ class DT_Contacts_Base {
 
     public function dt_custom_fields_settings( $fields, $post_type ){
         if ( $post_type === 'contacts' ){
-            $fields['nickname'] = [
-                'name' => __( 'Nickname', 'disciple_tools' ),
-                'type' => 'text',
-                'tile' => 'details',
-                'icon' => get_template_directory_uri() . '/dt-assets/images/nametag.svg?v=2',
-            ];
-            $contact_preferences = get_option( 'dt_contact_preferences', [] );
-            $fields['type'] = [
-                'name'        => __( 'Contact Type', 'disciple_tools' ),
-                'type'        => 'key_select',
-                'default'     => [
-                    'user' => [
-                        'label' => __( 'User', 'disciple_tools' ),
-                        'description' => __( 'Representing a User in the system', 'disciple_tools' ),
-                        'color' => '#3F729B',
-                        'hidden' => true,
-                        'in_create_form' => false,
-                    ],
-                    'personal' => [
-                        'label' => __( 'Private Contact', 'disciple_tools' ),
-                        'color' => '#9b379b',
-                        'description' => __( 'A friend, family member or acquaintance', 'disciple_tools' ),
-                        'visibility' => __( 'Only me', 'disciple_tools' ),
-                        'icon' => get_template_directory_uri() . '/dt-assets/images/locked.svg?v=2',
-                        'order' => 50,
-                        'hidden' => !empty( $contact_preferences['hide_personal_contact_type'] ),
-                        'default' => true
-                    ],
-                ],
-                'description' => 'See full documentation here: https://disciple.tools/user-docs/getting-started-info/contacts/contact-types',
-                'icon' => get_template_directory_uri() . '/dt-assets/images/circle-square-triangle.svg?v=2',
-                'customizable' => false
-            ];
-            $fields['duplicate_data'] = [
-                'name' => 'Duplicates', //system string does not need translation
-                'type' => 'array',
-                'default' => [],
-                'hidden' => true
-            ];
-            $fields['duplicate_of'] = [
-                'name' => 'Duplicate of', //system string does not need translation
-                'type' => 'text',
-                'hidden' => true
-            ];
 
-            $fields['languages'] = [
-                'name' => __( 'Languages', 'disciple_tools' ),
-                'type' => 'multi_select',
-                'default' => dt_get_option( 'dt_working_languages' ) ?: [],
-                'icon' => get_template_directory_uri() . '/dt-assets/images/languages.svg?v=2',
-                'tile' => 'no_tile'
-            ];
-
-            //add communication channels
-            $fields['contact_phone'] = [
-                'name' => __( 'Phone', 'disciple_tools' ),
-                'icon' => get_template_directory_uri() . '/dt-assets/images/phone.svg?v=2',
-                'type' => 'communication_channel',
-                'tile' => 'details',
-                'customizable' => false,
-                'in_create_form' => true,
-                'messagingServices' => [
-                    'Signal' => [
-                        'name' => __( 'Signal', 'disciple_tools' ),
-                        'link' => 'https://signal.me/#p/PHONE_NUMBER',
-                        'icon' => get_template_directory_uri() . '/dt-assets/images/signal.svg'
-                    ],
-                    'Viber' => [
-                        'name' => __( 'Viber', 'disciple_tools' ),
-                        'link' => 'viber://chat?number=PHONE_NUMBER',
-                        'icon' => get_template_directory_uri() . '/dt-assets/images/viber.svg'
-                    ],
-                    'Whatsapp' => [
-                        'name' => __( 'WhatsApp', 'disciple_tools' ),
-                        'link' => 'https://api.whatsapp.com/send?phone=PHONE_NUMBER_NO_PLUS',
-                        'icon' => get_template_directory_uri() . '/dt-assets/images/signal.svg'
-                    ],
-                ]
-            ];
-            $fields['contact_email'] = [
-                'name' => __( 'Email', 'disciple_tools' ),
-                'icon' => get_template_directory_uri() . '/dt-assets/images/email.svg?v=2',
-                'type' => 'communication_channel',
-                'tile' => 'details',
-                'customizable' => false
-            ];
-
-            // add location fields
-            $fields['location_grid'] = [
-                'name'        => __( 'Locations', 'disciple_tools' ),
-                'description' => _x( 'The general location where this contact is located.', 'Optional Documentation', 'disciple_tools' ),
-                'type'        => 'location',
-                'mapbox'    => false,
-                'in_create_form' => true,
-                'tile' => 'details',
-                'icon' => get_template_directory_uri() . '/dt-assets/images/location.svg?v=2',
-            ];
-            $fields['location_grid_meta'] = [
-                'name'        => __( 'Locations or Address', 'disciple_tools' ),
-                'type'        => 'location_meta',
-                'tile'      => 'details',
-                'mapbox'    => false,
-                'hidden' => true,
-                'in_create_form' => true,
-                'icon' => get_template_directory_uri() . '/dt-assets/images/map-marker-multiple.svg?v=2',
-            ];
-            $fields['contact_address'] = [
-                'name' => __( 'Address', 'disciple_tools' ),
-                'icon' => get_template_directory_uri() . '/dt-assets/images/house.svg?v=2',
-                'type' => 'communication_channel',
-                'tile' => 'details',
-                'mapbox'    => false,
-                'customizable' => false
-            ];
-            if ( DT_Mapbox_API::get_key() ){
-                $fields['contact_address']['custom_display'] = true;
-                $fields['contact_address']['mapbox'] = true;
-                $fields['contact_address']['hidden'] = true;
-                unset( $fields['contact_address']['tile'] );
-                $fields['location_grid']['mapbox'] = true;
-                $fields['location_grid']['hidden'] = true;
-                $fields['location_grid_meta']['mapbox'] = true;
-                $fields['location_grid_meta']['hidden'] = false;
-            }
-
-            // add social media
-            $fields['contact_facebook'] = [
-                'name' => __( 'Facebook', 'disciple_tools' ),
-                'icon' => get_template_directory_uri() . '/dt-assets/images/facebook.svg?v=2',
-                'hide_domain' => true,
-                'type' => 'communication_channel',
-                'tile' => 'details',
-                'customizable' => false
-            ];
-            $fields['contact_twitter'] = [
-                'name' => __( 'Twitter', 'disciple_tools' ),
-                'icon' => get_template_directory_uri() . '/dt-assets/images/twitter.svg?v=2',
-                'hide_domain' => true,
-                'type' => 'communication_channel',
-                'tile' => 'details',
-                'customizable' => false
-            ];
-            $fields['contact_other'] = [
-                'name' => __( 'Other Social Links', 'disciple_tools' ),
-                'icon' => get_template_directory_uri() . '/dt-assets/images/chat.svg?v=2',
-                'hide_domain' => false,
-                'type' => 'communication_channel',
-                'tile' => 'details',
-                'customizable' => false
-            ];
-
-            $fields['relation'] = [
-                'name' => sprintf( _x( 'Connections to other %s', 'connections to other records', 'disciple_tools' ), __( 'Contacts', 'disciple_tools' ) ),
-                'description' => _x( 'Relationship this contact has with another contact in the system.', 'Optional Documentation', 'disciple_tools' ),
-                'type' => 'connection',
-                'post_type' => 'contacts',
-                'p2p_direction' => 'any',
-                'p2p_key' => 'contacts_to_relation',
-                'tile' => 'other',
-                'in_create_form' => [ 'placeholder' ],
-                'icon' => get_template_directory_uri() . '/dt-assets/images/connection-people.svg?v=2',
-            ];
-
-            $fields['gender'] = [
-                'name'        => __( 'Gender', 'disciple_tools' ),
-                'type'        => 'key_select',
-                'default'     => [
-                    'male'    => [ 'label' => __( 'Male', 'disciple_tools' ) ],
-                    'female'  => [ 'label' => __( 'Female', 'disciple_tools' ) ],
-                ],
-                'tile'     => 'details',
-                'icon' => get_template_directory_uri() . '/dt-assets/images/gender-male-female.svg',
-            ];
-
-            $fields['age'] = [
-                'name'        => __( 'Age', 'disciple_tools' ),
-                'type'        => 'key_select',
-                'default'     => [
-                    'not-set' => [ 'label' => '' ],
-                    '<19'     => [ 'label' => __( 'Under 18 years old', 'disciple_tools' ) ],
-                    '<26'     => [ 'label' => __( '18-25 years old', 'disciple_tools' ) ],
-                    '<41'     => [ 'label' => __( '26-40 years old', 'disciple_tools' ) ],
-                    '>41'     => [ 'label' => __( 'Over 40 years old', 'disciple_tools' ) ],
-                ],
-                'tile'     => 'details',
-                'icon' => get_template_directory_uri() . '/dt-assets/images/contact-age.svg?v=2',
-                'select_cannot_be_empty' => true //backwards compatible since we already have an "none" value
-            ];
-
-            $fields['requires_update'] = [
-                'name'        => __( 'Requires Update', 'disciple_tools' ),
-                'type'        => 'boolean',
-                'default'     => false,
-            ];
-
-            $fields['overall_status'] = [
-                'name' => __( 'Contact Status', 'disciple_tools' ),
-                'description' => _x( 'The Contact Status describes the progress in communicating with the contact.', 'Contact Status field description', 'disciple_tools' ),
-                'type' => 'key_select',
-                'default' => [
-                    'active'       => [
-                        'label' => __( 'Active', 'disciple_tools' ),
-                        'description' => _x( 'The contact is progressing and/or continually being updated.', 'Contact Status field description', 'disciple_tools' ),
-                        'color' => '#4CAF50',
-                    ],
-                    'closed' => [
-                        'label' => __( 'Archived', 'disciple_tools' ),
-                        'color' => '#808080',
-                        'description' => _x( 'This contact has made it known that they no longer want to continue or you have decided not to continue with him/her.', 'Contact Status field description', 'disciple_tools' ),
-                    ]
-                ]
-            ];
         }
         return $fields;
     }
@@ -588,6 +377,17 @@ class DT_Contacts_Base {
             wp_enqueue_script( 'dt_contacts', get_template_directory_uri() . '/dt-contacts/contacts.js', [
                 'jquery',
             ], filemtime( get_theme_file_path() . '/dt-contacts/contacts.js' ), true );
+            wp_localize_script( 'dt_contacts', 'dt_contacts', [
+                'translations' => [
+                    'all' => __( 'All', 'disciple_tools' ),
+                    'ready' => __( 'Ready', 'disciple_tools' ),
+                    'recent' => __( 'Recent', 'disciple_tools' ),
+                    'location' => __( 'Location', 'disciple_tools' ),
+                    'assign' => __( 'Assign', 'disciple_tools' ),
+                    'language' => __( 'Language', 'disciple_tools' ),
+                    'gender' => __( 'Gender', 'disciple_tools' ),
+                ],
+            ] );
         }
     }
 

@@ -20,22 +20,17 @@ class DT_Contacts_Access extends DT_Module_Base {
         }
         //permissions
         add_filter( 'dt_set_roles_and_permissions', [ $this, 'dt_set_roles_and_permissions' ], 10, 1 );
-        add_filter( 'dt_can_view_permission', [ $this, 'can_view_permission_filter' ], 10, 3 );
-        add_filter( 'dt_can_update_permission', [ $this, 'can_update_permission_filter' ], 10, 3 );
 
         //setup fields
         add_action( 'rest_api_init', [ $this, 'add_api_routes' ] );
-        add_filter( 'dt_custom_fields_settings', [ $this, 'dt_custom_fields_settings' ], 20, 2 );
         //display tiles and fields
-        add_filter( 'dt_details_additional_tiles', [ $this, 'dt_details_additional_tiles' ], 20, 2 );
         add_action( 'dt_record_top_above_details', [ $this, 'dt_record_top_above_details' ], 20, 2 );
         add_action( 'dt_render_field_for_display_template', [ $this, 'dt_render_field_for_display_template' ], 20, 6 );
 
-        add_action( 'wp_enqueue_scripts', [ $this, 'scripts' ], 99 );
+//        add_action( 'wp_enqueue_scripts', [ $this, 'scripts' ], 99 );
 
         //list
         add_filter( 'dt_user_list_filters', [ $this, 'dt_user_list_filters' ], 20, 2 );
-        add_filter( 'dt_filter_access_permissions', [ $this, 'dt_filter_access_permissions' ], 20, 2 );
 
         //api
         add_filter( 'dt_post_update_fields', [ $this, 'dt_post_update_fields' ], 10, 4 );
@@ -66,292 +61,6 @@ class DT_Contacts_Access extends DT_Module_Base {
         return $expected_roles;
     }
 
-    public function dt_custom_fields_settings( $fields, $post_type ){
-        $declared_fields = $fields;
-        if ( $post_type === 'contacts' ){
-            if ( isset( $fields['type']['default']['personal'] ) ){
-                $fields['type']['default']['personal']['default'] = false;
-            }
-            $fields['type']['default']['access'] = [
-                'label' => __( 'Standard Contact', 'disciple_tools' ),
-                'color' => '#2196F3',
-                'description' => __( 'A contact to collaborate on', 'disciple_tools' ),
-                'visibility' => __( 'Me and project leadership', 'disciple_tools' ),
-                'icon' => get_template_directory_uri() . '/dt-assets/images/share.svg?v=2',
-                'order' => 20,
-                'default' => true,
-            ];
-            $fields['type']['default']['access_placeholder'] = [
-                'label' => __( 'Connection', 'disciple_tools' ),
-                'color' => '#FF9800',
-                'description' => __( 'Connected to a contact, or generational fruit', 'disciple_tools' ),
-                'icon' => get_template_directory_uri() . '/dt-assets/images/share.svg?v=2',
-                'order' => 40,
-                'visibility' => __( 'Collaborators', 'disciple_tools' ),
-                'in_create_form' => false,
-            ];
-
-            $fields['assigned_to'] = [
-                'name'        => __( 'Assigned To', 'disciple_tools' ),
-                'description' => __( 'Select the main person who is responsible for reporting on this contact.', 'disciple_tools' ),
-                'type'        => 'user_select',
-                'default'     => '',
-                'tile'        => 'status',
-                'icon' => get_template_directory_uri() . '/dt-assets/images/assigned-to.svg?v=2',
-                'show_in_table' => 25,
-                'only_for_types' => [ 'access', 'user' ],
-                'custom_display' => true
-            ];
-            $fields['seeker_path'] = [
-                'name'        => __( 'Seeker Path', 'disciple_tools' ),
-                'description' => _x( 'Set the status of your progression with the contact. These are the steps that happen in a specific order to help a contact move forward.', 'Seeker Path field description', 'disciple_tools' ),
-                'type'        => 'key_select',
-                'default'     => [
-                    'none'        => [
-                      'label' => __( 'Contact Attempt Needed', 'disciple_tools' ),
-                      'description' => ''
-                    ],
-                    'attempted'   => [
-                      'label' => __( 'Contact Attempted', 'disciple_tools' ),
-                      'description' => ''
-                    ],
-                    'established' => [
-                      'label' => __( 'Contact Established', 'disciple_tools' ),
-                      'description' => ''
-                    ],
-                    'scheduled'   => [
-                      'label' => __( 'First Meeting Scheduled', 'disciple_tools' ),
-                      'description' => ''
-                    ],
-                    'met'         => [
-                      'label' => __( 'First Meeting Complete', 'disciple_tools' ),
-                      'description' => ''
-                    ],
-                    'ongoing'     => [
-                      'label' => __( 'Ongoing Meetings', 'disciple_tools' ),
-                      'description' => ''
-                    ],
-                    'coaching'    => [
-                      'label' => __( 'Being Coached', 'disciple_tools' ),
-                      'description' => ''
-                    ],
-                ],
-                'customizable' => 'add_only',
-                'tile' => 'followup',
-                'show_in_table' => 15,
-                'only_for_types' => [ 'access' ],
-                'icon' => get_template_directory_uri() . '/dt-assets/images/sign-post.svg?v=2',
-            ];
-
-            $fields['overall_status'] = [
-                'name'        => __( 'Contact Status', 'disciple_tools' ),
-                'type'        => 'key_select',
-                'default_color' => '#366184',
-                'default'     => [
-                    'new'   => [
-                        'label' => __( 'New Contact', 'disciple_tools' ),
-                        'description' => _x( 'The contact is new in the system.', 'Contact Status field description', 'disciple_tools' ),
-                        'color' => '#F43636',
-                    ],
-                    'unassignable' => [
-                        'label' => __( 'Not Ready', 'disciple_tools' ),
-                        'description' => _x( 'There is not enough information to move forward with the contact at this time.', 'Contact Status field description', 'disciple_tools' ),
-                        'color' => '#FF9800',
-                    ],
-                    'unassigned'   => [
-                        'label' => __( 'Dispatch Needed', 'disciple_tools' ),
-                        'description' => _x( 'This contact needs to be assigned to a multiplier.', 'Contact Status field description', 'disciple_tools' ),
-                        'color' => '#F43636',
-                    ],
-                    'assigned'     => [
-                        'label' => __( 'Waiting to be accepted', 'disciple_tools' ),
-                        'description' => _x( 'The contact has been assigned to someone, but has not yet been accepted by that person.', 'Contact Status field description', 'disciple_tools' ),
-                        'color' => '#FF9800',
-                    ],
-                    'active'       => [], //already declared. Here to indicate order
-                    'paused'       => [
-                        'label' => __( 'Paused', 'disciple_tools' ),
-                        'description' => _x( 'This contact is currently on hold (i.e. on vacation or not responding).', 'Contact Status field description', 'disciple_tools' ),
-                        'color' => '#FF9800',
-                    ],
-                    'closed' => [] //already declared. Here to indicate order
-                ],
-                'tile'     => 'status',
-                'customizable' => 'add_only',
-                'custom_display' => true,
-                'icon' => get_template_directory_uri() . '/dt-assets/images/status.svg?v=2',
-                'show_in_table' => 10,
-                'only_for_types' => [ 'access' ],
-                'select_cannot_be_empty' => true
-            ];
-
-            $fields['reason_unassignable'] = [
-                'name'        => __( 'Reason Not Ready', 'disciple_tools' ),
-                'description' => _x( 'The main reason the contact is not ready to be assigned to a user.', 'Optional Documentation', 'disciple_tools' ),
-                'type'        => 'key_select',
-                'default'     => [
-                    'none'         => [
-                        'label' => '',
-                    ],
-                    'insufficient' => [
-                        'label' => __( 'Insufficient Contact Information', 'disciple_tools' )
-                    ],
-                    'location'     => [
-                        'label' => __( 'Unknown Location', 'disciple_tools' )
-                    ],
-                    'media'        => [
-                        'label' => __( 'Only wants media', 'disciple_tools' )
-                    ],
-                    'outside_area' => [
-                        'label' => __( 'Outside Area', 'disciple_tools' )
-                    ],
-                    'needs_review' => [
-                        'label' => __( 'Needs Review', 'disciple_tools' )
-                    ],
-                    'awaiting_confirmation' => [
-                        'label' => __( 'Waiting for Confirmation', 'disciple_tools' )
-                    ],
-                ],
-                'customizable' => 'all',
-                'only_for_types' => [ 'access' ]
-            ];
-
-            $fields['reason_paused'] = [
-                'name'        => __( 'Reason Paused', 'disciple_tools' ),
-                'description' => _x( 'A paused contact is one you are not currently interacting with but expect to in the future.', 'Optional Documentation', 'disciple_tools' ),
-                'type'        => 'key_select',
-                'default' => [
-                    'none'                 => [ 'label' => '' ],
-                    'vacation'             => [ 'label' => _x( 'Contact on vacation', 'Reason Paused label', 'disciple_tools' ) ],
-                    'not_responding'       => [ 'label' => _x( 'Contact not responding', 'Reason Paused label', 'disciple_tools' ) ],
-                    'not_available'        => [ 'label' => _x( 'Contact not available', 'Reason Paused label', 'disciple_tools' ) ],
-                    'little_interest'      => [ 'label' => _x( 'Contact has little interest/hunger', 'Reason Paused label', 'disciple_tools' ) ],
-                    'no_initiative'        => [ 'label' => _x( 'Contact shows no initiative', 'Reason Paused label', 'disciple_tools' ) ],
-                    'questionable_motives' => [ 'label' => _x( 'Contact has questionable motives', 'Reason Paused label', 'disciple_tools' ) ],
-                    'ball_in_their_court'  => [ 'label' => _x( 'Ball is in the contact\'s court', 'Reason Paused label', 'disciple_tools' ) ],
-                    'wait_and_see'         => [ 'label' => _x( 'We want to see if/how the contact responds to automated text messages', 'Reason Paused label', 'disciple_tools' ) ],
-                ],
-                'customizable' => 'all',
-                'only_for_types' => [ 'access' ]
-            ];
-
-            $fields['reason_closed'] = [
-                'name'        => __( 'Reason Archived', 'disciple_tools' ),
-                'description' => _x( "A closed contact is one you can't or don't wish to interact with.", 'Optional Documentation', 'disciple_tools' ),
-                'type'        => 'key_select',
-                'default'     => [
-                    'none'                 => [ 'label' => '' ],
-                    'duplicate'            => [ 'label' => _x( 'Duplicate', 'Reason Closed label', 'disciple_tools' ) ],
-                    'insufficient'         => [ 'label' => _x( 'Insufficient contact info', 'Reason Closed label', 'disciple_tools' ) ],
-                    'denies_submission'    => [ 'label' => _x( 'Denies submitting contact request', 'Reason Closed label', 'disciple_tools' ) ],
-                    'hostile_self_gain'    => [ 'label' => _x( 'Hostile, playing games or self gain', 'Reason Closed label', 'disciple_tools' ) ],
-                    'apologetics'          => [ 'label' => _x( 'Only wants to argue or debate', 'Reason Closed label', 'disciple_tools' ) ],
-                    'media_only'           => [ 'label' => _x( 'Just wanted media or book', 'Reason Closed label', 'disciple_tools' ) ],
-                    'no_longer_interested' => [ 'label' => _x( 'No longer interested', 'Reason Closed label', 'disciple_tools' ) ],
-                    'no_longer_responding' => [ 'label' => _x( 'No longer responding', 'Reason Closed label', 'disciple_tools' ) ],
-                    'already_connected'    => [ 'label' => _x( 'Already in church or connected with others', 'Reason Closed label', 'disciple_tools' ) ],
-                    'transfer'             => [ 'label' => _x( 'Transferred contact to partner', 'Reason Closed label', 'disciple_tools' ) ],
-                    'martyred'             => [ 'label' => _x( 'Martyred', 'Reason Closed label', 'disciple_tools' ) ],
-                    'moved'                => [ 'label' => _x( 'Moved or relocated', 'Reason Closed label', 'disciple_tools' ) ],
-                    'gdpr'                 => [ 'label' => _x( 'GDPR request', 'Reason Closed label', 'disciple_tools' ) ],
-                    'unknown'              => [ 'label' => _x( 'Unknown', 'Reason Closed label', 'disciple_tools' ) ]
-                ],
-                'customizable' => 'all',
-                'only_for_types' => [ 'access' ]
-            ];
-
-            $fields['accepted'] = [
-                'name'        => __( 'Accepted', 'disciple_tools' ),
-                'type'        => 'boolean',
-                'default'     => false,
-                'hidden'      => true,
-                'only_for_types' => [ 'access' ]
-            ];
-            $sources_default = [
-                'personal'           => [
-                    'label'       => __( 'Personal', 'disciple_tools' ),
-                    'key'         => 'personal',
-                ],
-                'web'           => [
-                    'label'       => __( 'Web', 'disciple_tools' ),
-                    'key'         => 'web',
-                ],
-                'facebook'      => [
-                    'label'       => __( 'Facebook', 'disciple_tools' ),
-                    'key'         => 'facebook',
-                ],
-                'twitter'       => [
-                    'label'       => __( 'Twitter', 'disciple_tools' ),
-                    'key'         => 'twitter',
-                ],
-                'transfer' => [
-                    'label'       => __( 'Transfer', 'disciple_tools' ),
-                    'key'         => 'transfer',
-                    'description' => __( 'Contacts transferred from a partnership with another Disciple.Tools site.', 'disciple_tools' ),
-                ]
-            ];
-            foreach ( dt_get_option( 'dt_site_custom_lists' )['sources'] as $key => $value ) {
-                if ( !isset( $sources_default[$key] ) ) {
-                    if ( isset( $value['enabled'] ) && $value['enabled'] === false ) {
-                        $value['deleted'] = true;
-                    }
-                    $sources_default[ $key ] = $value;
-                }
-            }
-
-            $fields['sources'] = [
-                'name'        => __( 'Sources', 'disciple_tools' ),
-                'description' => _x( 'The website, event or location this contact came from.', 'Optional Documentation', 'disciple_tools' ),
-                'type'        => 'multi_select',
-                'default'     => $sources_default,
-                'tile'     => 'details',
-                'customizable' => 'all',
-                'display' => 'typeahead',
-                'icon' => get_template_directory_uri() . '/dt-assets/images/arrow-collapse-all.svg?v=2',
-                'only_for_types' => [ 'access' ],
-                'in_create_form' => [ 'access' ]
-            ];
-
-            $fields['campaigns'] = [
-                'name' => __( 'Campaigns', 'disciple_tools' ),
-                'description' => _x( 'Marketing campaigns or access activities that this contact interacted with.', 'Optional Documentation', 'disciple_tools' ),
-                'tile' => 'details',
-                'type'        => 'tags',
-                'default'     => [],
-                'icon' => get_template_directory_uri() . '/dt-assets/images/megaphone.svg?v=2',
-                'only_for_types' => [ 'access' ],
-            ];
-
-            if ( empty( $fields['contact_phone']['in_create_form'] ) ){
-                $fields['contact_phone']['in_create_form'] = [ 'access' ];
-            } elseif ( is_array( $fields['contact_phone']['in_create_form'] ) ){
-                $fields['contact_phone']['in_create_form'][] = 'access';
-            }
-            if ( empty( $fields['contact_email']['in_create_form'] ) ){
-                $fields['contact_email']['in_create_form'] = [ 'access' ];
-            } elseif ( is_array( $fields['contact_email']['in_create_form'] ) ){
-                $fields['contact_email']['in_create_form'][] = 'access';
-            }
-            if ( empty( $fields['contact_address']['in_create_form'] ) ){
-                $fields['contact_address']['in_create_form'] = [ 'access' ];
-            } elseif ( is_array( $fields['contact_address']['in_create_form'] ) ){
-                $fields['contact_address']['in_create_form'][] = 'access';
-            }
-
-            $declared_fields  = dt_array_merge_recursive_distinct( $declared_fields, $fields );
-
-            //order overall status options
-            uksort( $declared_fields['overall_status']['default'], function ( $a, $b ) use ( $fields ){
-                return array_search( $a, array_keys( $fields['overall_status']['default'] ) ) <=> array_search( $b, array_keys( $fields['overall_status']['default'] ) );
-            } );
-            $fields = $declared_fields;
-        }
-
-        return $fields;
-
-
-    }
-
     public function add_api_routes(){
         $namespace = 'dt-posts/v2';
         register_rest_route(
@@ -370,27 +79,6 @@ class DT_Contacts_Access extends DT_Module_Base {
             ]
         );
 
-    }
-
-    public function dt_details_additional_tiles( $sections, $post_type = '' ){
-        if ( is_singular( 'contacts' ) ) {
-            $contact = DT_Posts::get_post( 'contacts', get_the_ID() );
-            if ( is_wp_error( $contact ) || ( isset( $contact['type']['key'] ) && $contact['type']['key'] !== 'access' ) ) {
-                return $sections;
-            }
-        }
-        if ( $post_type === 'contacts' ){
-            $sections['followup'] = [
-                'label' => __( 'Follow Up', 'disciple_tools' ),
-                'display_for' => [
-                    'type' => [ 'access' ],
-                ]
-            ];
-            if ( isset( $sections['status']['order'] ) && !in_array( 'overall_status', $sections['status']['order'], true ) ){
-                $sections['status']['order'] = array_merge( [ 'overall_status', 'assigned_to' ], $sections['status']['order'] );
-            }
-        }
-        return $sections;
     }
 
     public function dt_render_field_for_display_template( $post, $field_type, $field_key, $required_tag, $display_field_id, $custom_display = false ){
@@ -426,13 +114,13 @@ class DT_Contacts_Access extends DT_Module_Base {
                 ?>
                 <select id="overall_status" class="select-field color-select" style="margin-bottom:0; background-color: <?php echo esc_html( $active_color ) ?>" <?php echo esc_html( $disabled ); ?>>
                     <?php foreach ( $contact_fields['overall_status']['default'] as $key => $option ){
-                        $value = $option['label'] ?? '';
-                        if ( $current_key === $key ) {
-                            ?>
-                            <option value="<?php echo esc_html( $key ) ?>" selected><?php echo esc_html( $value ); ?></option>
-                        <?php } else { ?>
-                            <option value="<?php echo esc_html( $key ) ?>"><?php echo esc_html( $value ); ?></option>
-                        <?php } ?>
+                        if ( isset( $option['hidden'] ) && $option['hidden'] === true ){
+                            continue;
+                        }
+                        $selected = isset( $post[$field_key]['key'] ) && $post[$field_key]['key'] === strval( $key ); ?>
+                        <option value="<?php echo esc_html( $key )?>" <?php echo esc_html( $selected ? 'selected' : '' )?>>
+                            <?php echo esc_html( $option['label'] ) ?>
+                        </option>
                     <?php } ?>
                 </select>
                 <p>
@@ -458,96 +146,96 @@ class DT_Contacts_Access extends DT_Module_Base {
                     </span>
                     <button id="edit-reason" <?php if ( $hide_edit_button ) : ?> style="display: none"<?php endif; ?> ><i class="fi-pencil"></i></button>
                 </p>
-            <div class="reveal" id="paused-contact-modal" data-reveal>
-                <h3><?php echo esc_html( $contact_fields['reason_paused']['name'] ?? '' )?></h3>
-                <p><?php echo esc_html( $contact_fields['reason_paused']['description'] ?? '' )?></p>
-                <p><?php esc_html_e( 'Choose an option:', 'disciple_tools' )?></p>
+                <div class="reveal" id="paused-contact-modal" data-reveal>
+                    <h3><?php echo esc_html( $contact_fields['reason_paused']['name'] ?? '' )?></h3>
+                    <p><?php echo esc_html( $contact_fields['reason_paused']['description'] ?? '' )?></p>
+                    <p><?php esc_html_e( 'Choose an option:', 'disciple_tools' )?></p>
 
-                <select id="reason-paused-options">
-                    <?php
-                    foreach ( $contact_fields['reason_paused']['default'] as $reason_key => $option ) {
-                        if ( $option['label'] ) {
-                            ?>
-                            <option value="<?php echo esc_attr( $reason_key ) ?>"
-                                <?php if ( ( $contact['reason_paused']['key'] ?? '' ) === $reason_key ) {
-                                    echo 'selected';
-                                } ?>>
-                                <?php echo esc_html( $option['label'] ?? '' ) ?>
-                            </option>
-                            <?php
+                    <select id="reason-paused-options">
+                        <?php
+                        foreach ( $contact_fields['reason_paused']['default'] as $reason_key => $option ) {
+                            if ( $option['label'] && empty( $option['hidden'] ) ) {
+                                ?>
+                                <option value="<?php echo esc_attr( $reason_key ) ?>"
+                                    <?php if ( ( $contact['reason_paused']['key'] ?? '' ) === $reason_key ) {
+                                        echo 'selected';
+                                    } ?>>
+                                    <?php echo esc_html( $option['label'] ?? '' ) ?>
+                                </option>
+                                <?php
+                            }
                         }
-                    }
-                    ?>
-                </select>
-                <button class="button button-cancel clear" data-close aria-label="Close reveal" type="button">
-                    <?php echo esc_html__( 'Cancel', 'disciple_tools' )?>
-                </button>
-                <button class="button loader confirm-reason-button" type="button" id="confirm-pause" data-field="paused">
-                    <?php echo esc_html__( 'Confirm', 'disciple_tools' )?>
-                </button>
-                <button class="close-button" data-close aria-label="<?php esc_html_e( 'Close', 'disciple_tools' ); ?>" type="button">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="reveal" id="unassignable-contact-modal" data-reveal>
-                <h3><?php echo esc_html( $contact_fields['reason_unassignable']['name'] ?? '' )?></h3>
-                <p><?php echo esc_html( $contact_fields['reason_unassignable']['description'] ?? '' )?></p>
-                <p><?php esc_html_e( 'Choose an option:', 'disciple_tools' )?></p>
+                        ?>
+                    </select>
+                    <button class="button button-cancel clear" data-close aria-label="Close reveal" type="button">
+                        <?php echo esc_html__( 'Cancel', 'disciple_tools' )?>
+                    </button>
+                    <button class="button loader confirm-reason-button" type="button" id="confirm-pause" data-field="paused">
+                        <?php echo esc_html__( 'Confirm', 'disciple_tools' )?>
+                    </button>
+                    <button class="close-button" data-close aria-label="<?php esc_html_e( 'Close', 'disciple_tools' ); ?>" type="button">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="reveal" id="unassignable-contact-modal" data-reveal>
+                    <h3><?php echo esc_html( $contact_fields['reason_unassignable']['name'] ?? '' )?></h3>
+                    <p><?php echo esc_html( $contact_fields['reason_unassignable']['description'] ?? '' )?></p>
+                    <p><?php esc_html_e( 'Choose an option:', 'disciple_tools' )?></p>
 
-                <select id="reason-unassignable-options">
-                    <?php
-                    foreach ( $contact_fields['reason_unassignable']['default'] as $reason_key => $option ) {
-                        if ( isset( $option['label'] ) ) {
-                            ?>
-                            <option value="<?php echo esc_attr( $reason_key ) ?>"
-                                <?php if ( ( $contact['unassignable_paused']['key'] ?? '' ) === $reason_key ) {
-                                    echo 'selected';
-                                } ?>>
-                                <?php echo esc_html( $option['label'] ?? '' ) ?>
-                            </option>
-                            <?php
+                    <select id="reason-unassignable-options">
+                        <?php
+                        foreach ( $contact_fields['reason_unassignable']['default'] as $reason_key => $option ) {
+                            if ( isset( $option['label'] ) && empty( $option['hidden'] ) ) {
+                                ?>
+                                <option value="<?php echo esc_attr( $reason_key ) ?>"
+                                    <?php if ( ( $contact['unassignable_paused']['key'] ?? '' ) === $reason_key ) {
+                                        echo 'selected';
+                                    } ?>>
+                                    <?php echo esc_html( $option['label'] ?? '' ) ?>
+                                </option>
+                                <?php
+                            }
                         }
-                    }
-                    ?>
-                </select>
-                <button class="button button-cancel clear" data-close aria-label="Close reveal" type="button">
-                    <?php echo esc_html__( 'Cancel', 'disciple_tools' )?>
-                </button>
-                <button class="button loader confirm-reason-button" type="button" id="confirm-unassignable" data-field="unassignable">
-                    <?php echo esc_html__( 'Confirm', 'disciple_tools' )?>
-                </button>
-                <button class="close-button" data-close aria-label="<?php esc_html_e( 'Close', 'disciple_tools' ); ?>" type="button">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="reveal" id="closed-contact-modal" data-reveal>
-                <h3><?php echo esc_html( $contact_fields['reason_closed']['name'] ?? '' )?></h3>
-                <p><?php echo esc_html( $contact_fields['reason_closed']['description'] ?? '' )?></p>
-                <p><?php esc_html_e( 'Choose an option:', 'disciple_tools' )?></p>
+                        ?>
+                    </select>
+                    <button class="button button-cancel clear" data-close aria-label="Close reveal" type="button">
+                        <?php echo esc_html__( 'Cancel', 'disciple_tools' )?>
+                    </button>
+                    <button class="button loader confirm-reason-button" type="button" id="confirm-unassignable" data-field="unassignable">
+                        <?php echo esc_html__( 'Confirm', 'disciple_tools' )?>
+                    </button>
+                    <button class="close-button" data-close aria-label="<?php esc_html_e( 'Close', 'disciple_tools' ); ?>" type="button">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="reveal" id="closed-contact-modal" data-reveal>
+                    <h3><?php echo esc_html( $contact_fields['reason_closed']['name'] ?? '' )?></h3>
+                    <p><?php echo esc_html( $contact_fields['reason_closed']['description'] ?? '' )?></p>
+                    <p><?php esc_html_e( 'Choose an option:', 'disciple_tools' )?></p>
 
-                <select id="reason-closed-options">
-                    <?php
-                    foreach ( $contact_fields['reason_closed']['default'] as $reason_key => $option ) {
-                        if ( !empty( $option['label'] ) ) {
-                            $selected = ( $reason_key === ( $contact['reason_closed']['key'] ?? '' ) ) ? 'selected' : '';
-                            ?>
-                            <option
-                                value="<?php echo esc_attr( $reason_key ) ?>" <?php echo esc_html( $selected ) ?>> <?php echo esc_html( $option['label'] ?? '' ) ?></option>
-                            <?php
+                    <select id="reason-closed-options">
+                        <?php
+                        foreach ( $contact_fields['reason_closed']['default'] as $reason_key => $option ) {
+                            if ( !empty( $option['label'] ) && empty( $option['hidden'] ) ) {
+                                $selected = ( $reason_key === ( $contact['reason_closed']['key'] ?? '' ) ) ? 'selected' : '';
+                                ?>
+                                <option
+                                    value="<?php echo esc_attr( $reason_key ) ?>" <?php echo esc_html( $selected ) ?>> <?php echo esc_html( $option['label'] ?? '' ) ?></option>
+                                <?php
+                            }
                         }
-                    }
-                    ?>
-                </select>
-                <button class="button button-cancel clear" data-close aria-label="Close reveal" type="button">
-                    <?php echo esc_html__( 'Cancel', 'disciple_tools' )?>
-                </button>
-                <button class="button loader confirm-reason-button" type="button" id="confirm-close" data-field="closed">
-                    <?php echo esc_html__( 'Confirm', 'disciple_tools' )?>
-                </button>
-                <button class="close-button" data-close aria-label="<?php esc_html_e( 'Close', 'disciple_tools' ); ?>" type="button">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
+                        ?>
+                    </select>
+                    <button class="button button-cancel clear" data-close aria-label="Close reveal" type="button">
+                        <?php echo esc_html__( 'Cancel', 'disciple_tools' )?>
+                    </button>
+                    <button class="button loader confirm-reason-button" type="button" id="confirm-close" data-field="closed">
+                        <?php echo esc_html__( 'Confirm', 'disciple_tools' )?>
+                    </button>
+                    <button class="close-button" data-close aria-label="<?php esc_html_e( 'Close', 'disciple_tools' ); ?>" type="button">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
             <?php
         }
 
@@ -647,6 +335,10 @@ class DT_Contacts_Access extends DT_Module_Base {
     public function dt_record_top_above_details( $post_type, $contact ){
         if ( $post_type === 'contacts' && isset( $contact['type'] ) && $contact['type']['key'] === 'access' ) {
             $current_user = wp_get_current_user();
+
+            /**
+             * Add the accept contact banner
+             */
             if ( isset( $contact['overall_status'] ) && $contact['overall_status']['key'] == 'assigned' &&
                 isset( $contact['assigned_to'] ) && $contact['assigned_to']['id'] == $current_user->ID ) { ?>
                 <section class="cell accept-contact" id="accept-contact">
@@ -1189,99 +881,6 @@ class DT_Contacts_Access extends DT_Module_Base {
             GROUP BY status.meta_value, pm.meta_value
         ", get_current_user_id(), $user_post ), ARRAY_A);
         return $results;
-    }
-
-    public static function dt_filter_access_permissions( $permissions, $post_type ){
-        if ( $post_type === 'contacts' ){
-            if ( DT_Posts::can_view_all( $post_type ) ){
-                $permissions['type'] = [ 'access', 'user', 'access_placeholder' ];
-            } else if ( current_user_can( 'dt_all_access_contacts' ) ){
-                //give user permission to all contacts af type 'access'
-                $permissions[] = [ 'type' => [ 'access', 'user', 'access_placeholder' ] ];
-            } else if ( current_user_can( 'access_specific_sources' ) ){
-                //give user permission to all 'access' that also have a source the user can view.
-                $allowed_sources = get_user_option( 'allowed_sources', get_current_user_id() ) ?: [];
-                if ( empty( $allowed_sources ) || in_array( 'all', $allowed_sources, true ) ){
-                    $permissions['type'] = [ 'access', 'access_placeholder' ];
-                } elseif ( !in_array( 'restrict_all_sources', $allowed_sources ) ){
-                    $permissions[] = [ 'type' => [ 'access' ], 'sources' => $allowed_sources];
-                }
-            }
-        }
-        return $permissions;
-    }
-
-    // filter for access to a specific record
-    public function can_view_permission_filter( $has_permission, $post_id, $post_type ){
-        if ( $post_type === 'contacts' ){
-            if ( current_user_can( 'dt_all_access_contacts' ) ){
-                $contact_type = get_post_meta( $post_id, 'type', true );
-                if ( $contact_type === 'access' || $contact_type === 'user' || $contact_type === 'access_placeholder' ){
-                    return true;
-                }
-            }
-            //check if the user has access to all posts of a specific source
-            if ( current_user_can( 'access_specific_sources' ) ){
-                $contact_type = get_post_meta( $post_id, 'type', true );
-                if ( $contact_type === 'access' || $contact_type === 'access_placeholder' ){
-                    $sources = get_user_option( 'allowed_sources', get_current_user_id() ) ?: [];
-                    if ( empty( $sources ) || in_array( 'all', $sources ) ) {
-                        return true;
-                    }
-                    $post_sources = get_post_meta( $post_id, 'sources' );
-                    foreach ( $post_sources as $s ){
-                        if ( in_array( $s, $sources ) ){
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return $has_permission;
-    }
-    public function can_update_permission_filter( $has_permission, $post_id, $post_type ){
-        if ( current_user_can( 'dt_all_access_contacts' ) ){
-            $contact_type = get_post_meta( $post_id, 'type', true );
-            if ( $contact_type === 'access' || $contact_type === 'user' || $contact_type === 'access_placeholder' ){
-                return true;
-            }
-        }
-        //check if the user has access to all posts of a specific source
-        if ( current_user_can( 'access_specific_sources' ) ){
-            $contact_type = get_post_meta( $post_id, 'type', true );
-            if ( $contact_type === 'access' || $contact_type === 'access_placeholder' ){
-                $sources = get_user_option( 'allowed_sources', get_current_user_id() ) ?: [];
-                if ( empty( $sources ) || in_array( 'all', $sources ) ){
-                    return true;
-                }
-                $post_sources = get_post_meta( $post_id, 'sources' );
-                foreach ( $post_sources as $s ){
-                    if ( in_array( $s, $sources ) ){
-                        return true;
-                    }
-                }
-            }
-        }
-        return $has_permission;
-    }
-
-    public function scripts(){
-        if ( is_singular( 'contacts' ) && get_the_ID() && DT_Posts::can_view( $this->post_type, get_the_ID() ) ){
-            wp_enqueue_script( 'dt_contacts_access', get_template_directory_uri() . '/dt-contacts/contacts_access.js', [
-                'jquery',
-            ], filemtime( get_theme_file_path() . '/dt-contacts/contacts_access.js' ), true );
-            wp_localize_script( 'dt_contacts_access', 'dt_contacts_access', [
-                'translations' => [
-                    'all' => __( 'All', 'disciple_tools' ),
-                    'ready' => __( 'Ready', 'disciple_tools' ),
-                    'recent' => __( 'Recent', 'disciple_tools' ),
-                    'location' => __( 'Location', 'disciple_tools' ),
-                    'assign' => __( 'Assign', 'disciple_tools' ),
-                    'language' => __( 'Language', 'disciple_tools' ),
-                    'gender' => __( 'Gender', 'disciple_tools' ),
-                ],
-            ] );
-        }
     }
 
     private static function handle_quick_action_button_event( int $contact_id, array $field, bool $check_permissions = true ) {

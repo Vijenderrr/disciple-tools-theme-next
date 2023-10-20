@@ -25,6 +25,7 @@ add_filter( 'dt_post_type_modules', function( $modules ){
     return $modules;
 }, 10, 1 );
 
+require_once 'contact-fields.php';
 
 require_once 'base-setup.php';
 DT_Contacts_Base::instance();
